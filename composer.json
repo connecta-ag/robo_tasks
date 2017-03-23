@@ -1,0 +1,20 @@
+{
+    "name": "cag/robo-tasks",
+    "description": "CAG build pipeline tasks for Robo Task Runner",
+    "type": "robo-tasks",
+    "authors": [
+        {
+            "name": "Matthias Krams",
+            "email": "m.krams@connecta.ag"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "CAG\\Robo\\Task\\": "src"
+        }
+    },
+    "require": {
+        "php": ">=5.5.0",
+        "consolidation/Robo": "~1"
+    }
+}
