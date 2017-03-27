@@ -58,4 +58,14 @@ trait loadTasks
     {
         return $this->task(PullDbViaSsh::class);
     }
+
+    /**
+     * Task to compile assets
+     *
+     * @return \CAG\Robo\Task\SyncFiles
+     */
+    protected function taskSyncFiles()
+    {
+        return $this->task(SyncFiles::class);
+    }
 }

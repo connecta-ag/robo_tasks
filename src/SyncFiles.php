@@ -5,6 +5,7 @@ use RuntimeException;
 use Robo\Result;
 use Robo\Task\Base\loadTasks as Base;
 use Robo\Common\BuilderAwareTrait;
+use Robo\Common\DynamicParams;
 
 /**
  * Class SyncFiles
@@ -24,7 +25,7 @@ use Robo\Common\BuilderAwareTrait;
  */
 class SyncFiles extends \Robo\Task\BaseTask implements \Robo\Contract\BuilderAwareInterface
 {
-	use DynamicParams, BuilderAwareTrait;
+	use Base, DynamicParams, BuilderAwareTrait;
 
 	/** @var string */
 	private $folders;
@@ -53,15 +54,18 @@ class SyncFiles extends \Robo\Task\BaseTask implements \Robo\Contract\BuilderAwa
 	{
         $folders = explode(',', $this->folders);
 
-        if(empty($folders)) {
+        if(empty($folders) || empty($this->host) || empty($this->remoteUser) || empty($this->remoteBasePath) || empty($this->localBasePath)) {
             return Result::error($this);
         }
 
-        foreach ($folders as $folder) {
-            $this->say('Sync folder: ' . $folder);
+        $collection = $this->collectionBuilder();
 
-            // add path correction between
+        foreach ($folders as $folder) {
+            $this->printTaskInfo('Sync folder: ' . $folder);
+
+            // add path correction between remote and local
             if($this->localPathCorrection) {
+                $this->localPathCorrection = $this->addTrailingSlash($this->localPathCorrection);
                 $folderLocal = $this->localPathCorrection . $folder;
             }else {
                 $folderLocal = $folder;
@@ -70,11 +74,11 @@ class SyncFiles extends \Robo\Task\BaseTask implements \Robo\Contract\BuilderAwa
             $this->remoteBasePath = $this->addTrailingSlash($this->remoteBasePath);
             $this->localBasePath = $this->addTrailingSlash($this->localBasePath);
 
-            $this->taskRsync()
+            $collection->taskRsync()
                 ->fromHost($this->host)
-                ->fromPath($this->remoteBasePath . '/' . $folder)
+                ->fromPath($this->remoteBasePath . $folder)
                 ->fromUser($this->remoteUser)
-                ->toPath($this->localBasePath . '/' . $folderLocal)
+                ->toPath($this->localBasePath . $folderLocal)
                 ->recursive()
                 ->checksum()
                 ->wholeFile()
