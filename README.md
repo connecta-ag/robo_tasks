@@ -2,13 +2,6 @@
 
 Dieses Repository stellt weitere Tasks für den Task-Runner [robo.li](http://robo.li) zur Verfügung.
 
-### Folgende zusätzliche Tasks werden zur Verfügung gestellt: ###
-
-* PullDbViaSsh
-      * Aktualisieren/Anlegen einer lokalen Kopie der Remote-Datenbank
-* SyncFiles
-      * Download von Dateien die auf dem Remote-System hinterlegt sind.
-
 ## Wie verwende ich den Task Runner? ##
 
 ### Installation ###
@@ -30,4 +23,41 @@ Unter /example/RoboFile.php liegt eine beispielhafte Build-Pipeline die als Basi
 ```
 #!bash
 ./vendor/consolidation/robo/robo build:assets
+```
+# Zusätzliche Tasks #
+
+Folgende zusätzliche Tasks werden zur Verfügung gestellt:
+
+## PullDbViaSsh ##
+Datenbank auf aktuellen Stand des Remote-Systems angleichen. Falls keine Datenbank unter dem angegebenen Namen verfügbar ist wird diese angelegt.
+```
+#!php
+
+$this->taskPullDbViaSsh()
+      ->sshHost(getenv('CONTENT_SYNC_HOST'))
+      ->sshUser(getenv('CONTENT_SYNC_SSH_USER'))
+      ->sshKey(getenv('CONTENT_SYNC_SSH_KEY'))
+      ->remoteDbHost(getenv('CONTENT_SYNC_DATABASE_REMOTE_HOST'))
+      ->remoteDbUser(getenv('CONTENT_SYNC_DATABASE_REMOTE_DB_USER'))
+      ->remoteDbName(getenv('CONTENT_SYNC_DATABASE_REMOTE_DB_NAME'))
+      ->remoteDbPass(getenv('CONTENT_SYNC_DATABASE_REMOTE_DB_PASS'))
+      ->localDbName(getenv('DB_NAME'))
+      ->localDbPass(getenv('DB_PASS'))
+      ->run();
+```
+
+
+## SyncFiles ##
+Dateien in angegebenen Ordnern herunterladen und lokal zur Verfügung stellen.
+```
+#!php
+
+$this->taskSyncFiles()
+    ->host(getenv('CONTENT_SYNC_HOST'))
+    ->folders(getenv('CONTENT_SYNC_FOLDERS'))
+    ->remoteUser(getenv('CONTENT_SYNC_SSH_USER'))
+    ->remoteBasePath(getenv('CONTENT_SYNC_FILES_HOST_BASE_PATH'))
+    ->localBasePath(self::BASE_DIR)
+    ->localPathCorrection(getenv('CONTENT_SYNC_FILES_LOCAL_BASE_PATH_CORRECTION'))
+    ->run();
 ```
