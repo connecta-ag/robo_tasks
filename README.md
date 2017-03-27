@@ -25,7 +25,7 @@ Zur Installation muss lediglich die Datei composer.json innerhalb der Konfigurat
 ### Environment konfigurieren ###
 Um die Synchronisation der Datenbank und Dateien verwenden zu können, müssen die entsprechenden Konfigurationen in der Datei .env angepasst werden. Siehe /example/.env
 
-### Basis Build-Pipeline erstellen ###
+### Build-Pipeline erstellen ###
 Unter /example/RoboFile.php liegt eine beispielhafte Build-Pipeline die als Basis für neue Projekte verwendet werden kann. Diese muss lediglich in das Rootverzeichnis des Projekts gelegt werden. Anschließend können die enthaltenen Tasks über den folgenden Befehl aufgerugen werden:
 ```
 #!bash
