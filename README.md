@@ -5,9 +5,9 @@ Dieses Repository stellt weitere Tasks für den Task-Runner [robo.li](http://rob
 ### Folgende zusätzliche Tasks werden zur Verfügung gestellt: ###
 
 * PullDbViaSsh
-* ImportSqlDump
-* CreateDb
+      * Aktualisieren/Anlegen einer lokalen Kopie der Remote-Datenbank
 * SyncFiles
+      * Download von Dateien die auf dem Remote-System hinterlegt sind.
 
 ## Wie verwende ich den Task Runner? ##
 
