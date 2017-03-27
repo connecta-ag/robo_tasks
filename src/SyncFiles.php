@@ -1,7 +1,5 @@
 <?php namespace CAG\Robo\Task;
 
-use Robo\Collection\CollectionBuilder;
-use RuntimeException;
 use Robo\Result;
 use Robo\Task\Base\loadTasks as Base;
 use Robo\Common\BuilderAwareTrait;
