@@ -2,7 +2,7 @@
     "name": "cag/robo-tasks",
     "description": "CAG build pipeline tasks for Robo Task Runner",
     "type": "robo-tasks",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "authors": [
         {
             "name": "Matthias Krams",
