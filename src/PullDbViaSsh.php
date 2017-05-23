@@ -1,195 +1,150 @@
 <?php namespace CAG\Robo\Task;
 
-use Robo\Collection\CollectionBuilder;
+use Robo\Task\Remote\loadTasks as Remote;
 use RuntimeException;
 use Robo\Result;
 use Robo\Task\Base\loadTasks as Base;
 use CAG\Robo\Task\loadTasks as CAGTasks;
 use Robo\Common\DynamicParams;
-use CAG\Robo\Task\ImportSqlDump;
-use phpseclib\Net\SFTP;
-use phpseclib\Crypt\RSA;
 use Robo\Common\BuilderAwareTrait;
+
+/**
+ * Class PullDbViaSsh
+ *
+ * This class will help developers to automatically update their local database from the remote one configured in .env *
+ *
+ * @package CAG\Robo\Task
+ */
 
 class PullDbViaSsh extends \Robo\Task\BaseTask implements \Robo\Contract\BuilderAwareInterface
 {
-	use Base, DynamicParams, CAGTasks, BuilderAwareTrait;
+    use Base, DynamicParams, CAGTasks, BuilderAwareTrait, Remote;
 
-	/** @var string */
-	private $sshHost;
+    /** @var string */
+    private $sshHost;
 
-	/** @var string */
-	private $sshUser;
+    /** @var string */
+    private $sshUser;
 
-	/** @var string */
-	private $sshPass;
+    /** @var string */
+    private $sshPass;
 
-	/** @var string */
-	private $sshKey;
+    /** @var string */
+    private $sshKey;
 
-	/** @var string */
-	private $remoteDbHost = 'localhost';
+    /** @var string */
+    private $remoteDbHost = 'localhost';
 
-	/** @var string */
-	private $remoteDbUser = 'root';
+    /** @var string */
+    private $remoteDbUser = 'root';
 
-	/** @var string */
-	private $remoteDbPass;
+    /** @var string */
+    private $remoteDbPass;
 
-	/** @var string */
-	private $remoteDbName;
+    /** @var string */
+    private $remoteDbName;
 
-	/** @var string */
-	private $localDbHost = 'localhost';
+    /** @var string */
+    private $localDbHost = 'localhost';
 
-	/** @var string */
-	private $localDbUser = 'root';
+    /** @var string */
+    private $localDbUser = 'root';
 
-	/** @var string */
-	private $localDbPass;
+    /** @var string */
+    private $localDbPass = 'root';
 
-	/** @var string */
-	private $localDbName;
+    /** @var string */
+    private $localDbName;
 
-	/**
-	 * Executes the PullDbViaSsh Task.
-	 *
-	 * @return Result
-	 */
-	public function run()
-	{
-		// Login to the remote server
-		$this->printTaskInfo('Logging into remote server - <info>ssh://'.$this->sshUser.'@'.$this->sshHost.'/</info>');
-		$ssh = new SFTP($this->sshHost);
+    /**
+     * Executes the PullDbViaSsh Task.
+     *
+     * @return Result
+     */
+    public function run()
+    {
 
-		// Do we use password or a key
-		if (file_exists($this->sshKey) && empty($this->sshPass))
-		{
-			$key = new RSA();
-			$key->loadKey(file_get_contents($this->sshKey));
-			if (!$ssh->login($this->sshUser, $key))
-			{
-				throw new RuntimeException
-				(
-					'Failed to login via SSH using Key Based Auth.'
-				);
-			}
-		}
-		else
-		{
-			if (!$ssh->login($this->sshUser, $this->sshPass))
-			{
-				throw new RuntimeException
-				(
-					'Failed to login via SSH using Password Based Auth.'
-				);
-			}
-		}
-
-		// Create our dump filename
-		$dump_name = $this->remoteDbName.'_'.time();
-
-		// Create our dump on the remote server
-		$cmd = 'mysqldump '.
-			'-h'.$this->remoteDbHost.
-			' -u'.$this->remoteDbUser.
-			' '.(empty($this->remoteDbPass) ? '' : '-p'.$this->remoteDbPass).
-            ' --single-transaction \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_cagevents_category \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_cagevents_category_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_hash \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_hash_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_imagesizes \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_imagesizes_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_news_category \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_news_category_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_pages \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_pages_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_pagesection \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_pagesection_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_rootline \
-             --ignore-table=' . $this->remoteDbUser . '.cf_cache_rootline_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_datamapfactory_datamap \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_datamapfactory_datamap_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_object \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_object_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_reflection \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_reflection_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_typo3dbbackend_queries \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_typo3dbbackend_queries_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_typo3dbbackend_tablecolumns \
-             --ignore-table=' . $this->remoteDbUser . '.cf_extbase_typo3dbbackend_tablecolumns_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_tx_solr \
-             --ignore-table=' . $this->remoteDbUser . '.cf_tx_solr_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_vhs_main \
-             --ignore-table=' . $this->remoteDbUser . '.cf_vhs_main_tags \
-             --ignore-table=' . $this->remoteDbUser . '.cf_vhs_markdown \
-             --ignore-table=' . $this->remoteDbUser . '.cf_vhs_markdown_tags \
-             --ignore-table=' . $this->remoteDbUser . '.fe_session_data \
-             --ignore-table=' . $this->remoteDbUser . '.fe_sessions \
-             --ignore-table=' . $this->remoteDbUser . '.sys_history \
-             --ignore-table=' . $this->remoteDbUser . '.sys_log '.
-			' '.$this->remoteDbName.' > /tmp/'.$dump_name.'.sql'
-		;
-		$this->printTaskInfo('Dumping db on remote server - <info>'.$cmd.'</info>');
-		$results = $ssh->exec($cmd);
-		if ($ssh->getExitStatus() > 0)
-		{
-			throw new RuntimeException
-			(
-				'Failed to create dump on remote server. '.
-				$results
-			);
-		}
-
-		// Compressing dump
-		$cmd = 'gzip /tmp/'.$dump_name.'.sql';
-		$this->printTaskInfo('Compressing dump on remote server - <info>'.$cmd.'</info>');
-		$results = $ssh->exec($cmd);
-		if ($ssh->getExitStatus() > 0)
-		{
-			throw new RuntimeException
-			(
-				'Failed to compress dump on remote server. '.
-				$results
-			);
-		}
-
-		// Copy it down locally
-		$this->printTaskInfo('Transfering dump to local.');
-		$temp_dump_name = tempnam(sys_get_temp_dir(), 'dump');
-		$temp_dump = $temp_dump_name.'.sql.gz';
-        $this->printTaskInfo('Move dump from remote to local. Local path: <info>'.$temp_dump.'</info>');
-		if (!$ssh->get('/tmp/'.$dump_name.'.sql.gz', $temp_dump))
-		{
-			throw new RuntimeException('Failed to download dump.');
-		}
-
-		// Remove the dump from the remote server
-		$this->printTaskInfo('Removing dump from remote server - <info>rm /tmp/'.$dump_name.'.sql.gz</info>');
-		if (!$ssh->delete('/tmp/'.$dump_name.'.sql.gz'))
-		{
-			throw new RuntimeException('Failed to delete dump on remote server.');
-		}
-
-		// Import the dump locally
-
+        // Get task collection (via Traits?) // TODO: do we need that? Are there alternatives?
         $collection = $this->collectionBuilder();
-		if (
-			!$collection->taskImportSqlDump($temp_dump)
-                ->host($this->localDbHost)
-                ->user($this->localDbUser)
-                ->pass($this->localDbPass)
-                ->name($this->localDbName)
-                ->run()->wasSuccessful()
-		){
-			throw new RuntimeException('Failed to import dump on local server.');
-		}
 
-		$this->printTaskInfo('Deleting dump locally.');
-		unlink($temp_dump); unlink($temp_dump_name);
+        // Set sql dump filename
+        $sqlDumpFilename = $this->remoteDbName . '_' . time() . '.sql';
 
-		// If we get to here assume everything worked
-		return Result::success($this);
-	}
+        // Create our dump on the remote server (requires ~/.my.cnf)
+        // TODO: instead of ignoring tables rather only ignore the data dump, but include structure, please
+        $cmd = 'mysqldump ' .
+            ' --single-transaction ' .
+            //' --structure-tables=' . escapeshellarg(implode(',', $this->getStructureOnlyTableList())) . // TODO: make this happen!
+            ' ' . $this->remoteDbName . ' > /tmp/' . $sqlDumpFilename;
+
+        // 1) create a gzipped dump on the server // TODO: add the gzip part // TODO: Maybe add exception handling here, if file does not exist
+        $this->printTaskInfo('Dumping DB on remote server - <info>'.$cmd.'</info>');
+        $collection->taskSshExec($this->sshHost, $this->sshUser)
+            ->remoteDir('/tmp')
+            ->exec($cmd)
+            ->run();
+
+        // 2) download the dump // TODO: Add exception handling here, if file does not exist
+        $this->printTaskInfo('Downloading SQL dump <info>'.$sqlDumpFilename.'</info>');
+        $collection->taskRsync()
+            ->fromHost($this->sshHost)
+            ->fromPath('/tmp/' . $sqlDumpFilename)
+            ->fromUser($this->sshUser)
+            ->toPath('./_temp/')
+            ->checksum()
+            ->wholeFile()
+            ->verbose()
+            ->progress()
+            ->humanReadable()
+            ->stats()
+            ->run();
+
+        // 3) delete the dump on the server
+        $this->printTaskInfo('Deleting SQL dump on remote server <info>'.$sqlDumpFilename.'</info>');
+        $collection->taskSshExec($this->sshHost, $this->sshUser)
+            ->remoteDir('/tmp')
+            ->exec("rm -f ./$sqlDumpFilename")
+            ->run();
+
+        // 4) import the dump locally
+        $this->printTaskInfo("Importing SQL dump into <info>$this->localDbName@$this->localDbHost</info>: <info>./_temp/$sqlDumpFilename</info>");
+        if (
+        !$collection->taskImportSqlDump("./_temp/$sqlDumpFilename")
+            ->host($this->localDbHost)
+            ->user($this->localDbUser)
+            ->pass($this->localDbPass)
+            ->name($this->localDbName)
+            ->run()->wasSuccessful()
+        ) {
+            throw new RuntimeException('Failed to import dump on local server.');
+        }
+
+        // 5) delete the dump locally
+        $this->printTaskInfo('Deleting dump locally.');
+        unlink("./_temp/$sqlDumpFilename");
+
+        // If we get to here assume everything worked
+        return Result::success($this);
+    }
+
+    /**
+     * Return structure-only database table names.
+     *
+     * This is used to make the exported file as small as possible. All returned
+     * database table names indicate to only export their structure but not data
+     * rows.
+     *
+     * @return array
+     *   An array of database table names.
+     */
+    protected function getStructureOnlyTableList() {
+        $tables = [
+            'cf_*',
+            'fe_session_*',
+            'sys_history',
+            'sys_log',
+        ];
+
+        return $tables;
+    }
 }
