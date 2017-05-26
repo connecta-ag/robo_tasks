@@ -68,7 +68,7 @@ class PullDbViaSsh extends \Robo\Task\BaseTask implements \Robo\Contract\Builder
         $collection = $this->collectionBuilder();
 
         // Set sql dump filename
-        $sqlDumpFilename = $this->remoteDbName . '_' . time() . '.sql';
+        $sqlDumpFilename = $this->remoteDbName . '_' . date('YmdHis') . '.sql';
 
         // Create our dump on the remote server (requires ~/.my.cnf)
         // TODO: instead of ignoring tables rather only ignore the data dump, but include structure, please
