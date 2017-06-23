@@ -78,6 +78,7 @@ class SyncFiles extends \Robo\Task\BaseTask implements \Robo\Contract\BuilderAwa
                 ->fromUser($this->remoteUser)
                 ->toPath($this->localBasePath . $folderLocal)
                 ->recursive()
+                ->exclude('_processed_')
                 ->checksum()
                 ->wholeFile()
                 ->verbose()
